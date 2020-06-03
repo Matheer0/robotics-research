@@ -14,6 +14,6 @@ function [dq, index] = inverse_kinematics (robot, q_current, desired_velocity)
     null_space_projection = eye(joints) - pinv_jacobian * jacobian ;     % calculate the nullspace projection 
     dq      = pinv_jacobian * desired_velocity(4:6) + null_space_projection * v_0' ; 
     dq      = dq' ; 
-    index   = manipulability(robot, v_0);
+    index   = manipulability(robot, q_param);
     
 end
