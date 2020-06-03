@@ -6,14 +6,13 @@ function [dq, index] = inverse_kinematics (robot, q_current, desired_velocity)
     pinv_jacobian = pinv(jacobian);                                % pseudo-inverse of the jacobian, 7x3 matrix
    
     
-    q_param = [q_current(1: joints). JointPosition];   
+    q_param = [q_current(1: joints). JointPosition]';   
     configuration = robot.homeConfiguration;
-    home_config_param = [configuration(1: joints). JointPosition];
+    home_config_param = [configuration(1: joints). JointPosition]';
     v_0     = home_config_param - q_param;    % desired joint velocity in the null-space
                 
     null_space_projection = eye(joints) - pinv_jacobian * jacobian ;     % calculate the nullspace projection 
-    dq      = pinv_jacobian * desired_velocity(4:6) + null_space_projection * v_0' ; 
-    dq      = dq' ; 
+    dq      = pinv_jacobian * desired_velocity(4:6) + null_space_projection * v_0 ;   % 7x1 matrix 
     index   = manipulability(robot, q_param);
     
 end
