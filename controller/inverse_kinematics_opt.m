@@ -16,10 +16,10 @@ function [dq, index] = inverse_kinematics_opt (robot, q_current, desired_velocit
     max_speed = [0; 1.48; 1.48; 1.75; 1.31; 2.27; 2.36] ;
     min_speed = -1 * max_speed ;
     
-    A_1 = eye(joints);
-    b_1 = projection_inv * (max_speed - pseudo_solution) + q_current_param ; 
-    A_2 = -1 * eye(joints);
-    b_2 = -1 * projection_inv * (min_speed - pseudo_solution) - q_current_param ; 
+    A_1 = null_space_projection;
+    b_1 = max_speed - pseudo_solution + null_space_projection * q_current_param ; 
+    A_2 = -1 * null_space_projection;
+    b_2 = -1 * (min_speed - pseudo_solution) - null_space_projection * q_current_param ; 
     A = [A_1; A_2];
     b = [b_1; b_2];
     
