@@ -22,26 +22,28 @@ dim_steps = ceil( ( timeInterval(2) - timeInterval(1) ) / time_step ) ;
 
 %% Non-optimized Control Task-Space Motion
 q       = joint_pos_init ;
-q_param = [q(1:dim_joint). JointPosition];    
-dq      = zeros(1,dim_joint) ;
-state   = [q_param, dq] ;
+q_param = [q(1:dim_joint). JointPosition]';   % 7x1 matrix  
+dq      = zeros(size(q_param)) ;              % 7x1 matrix 
+state   = [q_param', dq'] ;                   % 1x14 matrix
 
-manipulability_index  = zeros(1, dim_steps) ;
-trajectory.time       = zeros(1, dim_steps) ;
-trajectory.state      = zeros(dim_steps, dim_state) ;
-trajectory.hand_pos   = zeros(dim_steps, 6) ;
+manipulability_index        = zeros(1, dim_steps) ;
+trajectory.time             = zeros(1, dim_steps) ;
+trajectory.state            = zeros(dim_steps, dim_state) ;
+trajectory.hand_pos_desired = zeros(dim_steps, 6) ;
+trajectory.hand_pos_current = zeros(dim_steps, 6) ;
 
 
 %% Optimized Control Task-Space Motion
 q_opt       = joint_pos_init ;
-q_opt_param = [q_opt(1:dim_joint). JointPosition];    
-dq_opt      = zeros(1,dim_joint) ;
-state_opt   = [q_opt_param, dq_opt] ;
+q_opt_param = [q_opt(1:dim_joint). JointPosition]';   % 7x1 matrix   
+dq_opt      = zeros(size(q_opt_param)) ;              % 7x1 matrix 
+state_opt   = [q_opt_param', dq_opt'] ;               % 1x14 matrix
 
-manipulability_index_opt  = zeros(1, dim_steps) ;
-trajectory_opt.time       = zeros(1, dim_steps) ;
-trajectory_opt.state      = zeros(dim_steps, dim_state) ;
-trajectory_opt.hand_pos   = zeros(dim_steps, 6) ;
+manipulability_index_opt        = zeros(1, dim_steps) ;
+trajectory_opt.time             = zeros(1, dim_steps) ;
+trajectory_opt.state            = zeros(dim_steps, dim_state) ;
+trajectory_opt.hand_pos_desired = zeros(dim_steps, 6) ;
+trajectory_opt.hand_pos_current = zeros(dim_steps, 6) ;
 
 
 %%
@@ -54,7 +56,7 @@ for t = timeInterval(1) : time_step : timeInterval(2)
     pose_current = getTransform(robot, q, endEffector) ;   % current hand position 
     desired_velocity = transformation_diff(pose_current, pose_desired) ; % calculate the velocity needed for the desired hand position
     [dq, measure] = inverse_kinematics(robot, q, desired_velocity ) ;     % use inverse kinematics to control the robot
-    state = [q_param, dq ] ;
+    state = [q_param', dq'] ;
     
     % save data for visualization
     manipulability_index(n) = measure ;
@@ -63,7 +65,7 @@ for t = timeInterval(1) : time_step : timeInterval(2)
     trajectory.hand_pos_current(n,:) = transformation_diff(pose_current) ;    
     trajectory.state(n,:) = state ; 
     % get next state
-    q_param  = q_param + dq * time_step; 
+    q_param  = q_param + time_step * dq; 
     for i = 1:dim_joint
         q(i).JointPosition = q_param(i);
     end    
@@ -74,7 +76,7 @@ for t = timeInterval(1) : time_step : timeInterval(2)
     pose_current_opt = getTransform(robot, q_opt, endEffector) ;  
     desired_velocity_opt = transformation_diff(pose_current_opt, pose_desired_opt) ; 
     [dq_opt, measure_opt] = inverse_kinematics_opt(robot, q_opt, desired_velocity_opt ) ;   
-    state_opt = [q_opt_param, dq_opt ] ;        
+    state_opt = [q_opt_param', dq_opt'] ;        
     
     manipulability_index_opt(n) = measure_opt ;
     trajectory_opt.time(n) = t ;    
@@ -83,7 +85,7 @@ for t = timeInterval(1) : time_step : timeInterval(2)
     trajectory_opt.state(n,:) = state_opt ; 
     
     % get next state
-    q_opt_param  = q_opt_param + dq_opt * time_step ; 
+    q_opt_param  = q_opt_param + time_step * dq_opt ; 
     for i = 1:dim_joint
         q_opt(i).JointPosition = q_opt_param(i);
     end 
