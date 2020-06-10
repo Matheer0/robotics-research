@@ -1,16 +1,14 @@
-function [dq, index] = inverse_kinematics_opt(robot, q_current, desired_velocity)
+function [dq, index] = inverse_kinematics_opt(robot, q_current, endEffector, desired_velocity)
     
     joints = numel(q_current);
-    jacobian = robot.geometricJacobian(q_current, robot.BodyNames{end});   % calculate the task jacobian matrix
+    jacobian = robot.geometricJacobian(q_current, endEffector);   % calculate the task jacobian matrix
     jacobian = jacobian(4:6,:);                                    % use 4:6 because I only want to control the position (and leave the orientation free), 3x29 matrix                                                              
     pinv_jacobian = pinv(jacobian);                                % pseudo-inverse of the jacobian, 29x3 matrix
     q_current_param = [q_current(1: joints). JointPosition]';      % 29x1 matrix 
     
     null_space_projection = eye(joints) - pinv_jacobian * jacobian ;      % calculate the nullspace projection
-    projection_inv = null_space_projection \ eye(joints) ;
     pseudo_solution = pinv_jacobian * desired_velocity(4:6) ;             % pseudo-inverse solution 
         
-    
     
     %% Find optimal q via optimization
     max_speed = [3; 3; 3; 3; 3;
@@ -33,14 +31,13 @@ function [dq, index] = inverse_kinematics_opt(robot, q_current, desired_velocity
     Aeq = jacobian;                         % equality constraint: J * q_opt = J * q_current_param
     beq = jacobian * q_current_param;
     q0 = q_current_param;             % start at current configuration
-    fun = @(q)(-1 * manipulability(robot,q));
+    fun = @(q)(-1 * manipulability(robot, q, endEffector));
     q_opt = fmincon(fun,q0,A,b,Aeq,beq,lb,ub);
    
     
     %%   
     v_0     = q_opt - q_current_param;          % OPTIMIZED desired joint velocity in the null-space            
     dq      = pseudo_solution + null_space_projection * v_0 ;  % 29x1 matrix 
-    
-    index   = manipulability(robot, q_current_param);
+    index   = manipulability(robot, q_current_param, endEffector);
     
 end
