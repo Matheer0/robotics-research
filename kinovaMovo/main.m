@@ -1,13 +1,13 @@
 clear all ; close all ;  
 
-robot       = loadrobot("kinovaMovo");
-dim_joint   = numel(robot.homeConfiguration);  % kinovaMovo has 29 joints 
-endEffector = robot.BodyNames{end};  % Get end-effector frame name
-
-
-%% Specify the some parameters 
+%% Robot Setup
 time_step = 0.1 ; % time step, in seconds
 hand_speed = 0.1; % m/s
+
+robot       = loadrobot("kinovaMovo");
+dim_joint   = numel(robot.homeConfiguration);  % Kinova Movo has 29 non-fixed joints 
+endEffector = robot.BodyNames{12};            % Get left hand end-effector frame name: 'left_wrist_3_link'
+% right_endEffector = robot.BodyNames{39};       % Get right hand end-effector frame name: 'right_wrist_3_link'
 
 joint_pos_init = robot.randomConfiguration ; 
 hand_pos_init  = getTransform(robot, joint_pos_init, endEffector);  % current hand position given the random joint angles
@@ -47,15 +47,18 @@ trajectory_opt.hand_pos_current = zeros(dim_steps, 6) ;
 
 
 %%
+
 n = 1 ;
 for t = timeInterval(1) : time_step : timeInterval(2)
+    
+    n
     
     %% Non-opt
     
     pose_desired = taskWaypoints(:,:,n) ;                  % desired hand position
     pose_current = getTransform(robot, q, endEffector) ;   % current hand position 
     desired_velocity = transformation_diff(pose_current, pose_desired) ; % calculate the velocity needed for the desired hand position
-    [dq, measure] = inverse_kinematics(robot, q, desired_velocity) ;     % use inverse kinematics to control the robot
+    [dq, measure] = inverse_kinematics(robot, q, endEffector, desired_velocity) ;     % use inverse kinematics to control the robot
     state = [q_param', dq'] ;
     
     % save data for visualization
@@ -75,7 +78,7 @@ for t = timeInterval(1) : time_step : timeInterval(2)
     pose_desired_opt = taskWaypoints(:,:,n) ;                  
     pose_current_opt = getTransform(robot, q_opt, endEffector) ;  
     desired_velocity_opt = transformation_diff(pose_current_opt, pose_desired_opt) ; 
-    [dq_opt, measure_opt] = inverse_kinematics_opt(robot, q_opt, desired_velocity_opt) ;   
+    [dq_opt, measure_opt] = inverse_kinematics_opt(robot, q_opt, endEffector, desired_velocity_opt) ;   
     state_opt = [q_opt_param', dq_opt'] ;        
     
     manipulability_index_opt(n) = measure_opt ;
