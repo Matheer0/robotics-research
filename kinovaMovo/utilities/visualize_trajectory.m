@@ -1,5 +1,5 @@
 %function visualize_trajectory (robot, trajTimes, tTask, stateTask)
-function visualize_trajectory (robot, trajectory)
+function visualize_trajectory (robot, trajectory, destination)
 
     dim_joint = numel(robot.homeConfiguration) ;
     dim_steps = numel(trajectory.time) ;
@@ -35,6 +35,8 @@ function visualize_trajectory (robot, trajectory)
         pose_current = trajectory.hand_pos_current(i,:) ;
         plot3(pose_desired(4), pose_desired(5), pose_desired(6), 'r.', 'MarkerSize',20)
         plot3(pose_current(4), pose_current(5), pose_current(6), 'b.', 'MarkerSize',20)
+        % draw destination at every step
+        plot3(destination(1), destination(2), destination(3), 'g.', 'MarkerSize',20)
         drawnow;
     end
     
