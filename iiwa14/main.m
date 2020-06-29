@@ -11,7 +11,8 @@ hand_speed = 0.1; % m/s
 
 joint_pos_init = robot.randomConfiguration ; 
 hand_pos_init  = getTransform(robot, joint_pos_init, endEffector);  % current hand position given the random joint angles
-hand_pos_final = trvec2tform([0.4, 0, 0.6]) * axang2tform([0 1 0 pi]); % target hand position
+cartesian_pos_final = [0.4, 0, 0.6];
+hand_pos_final = trvec2tform(cartesian_pos_final) * axang2tform([0 1 0 pi]); % target hand position
 
 
 %% Generate task-space trajectory
@@ -107,7 +108,7 @@ minimum_opt = min(manipulability_index_opt);
 maximum_opt = max(manipulability_index_opt);
 fprintf('Opt: Ave %d, Min %d, Max %d \n', ave_opt, minimum_opt, maximum_opt);
 
-visualize_trajectory(robot, trajectory) ;
-visualize_trajectory(robot, trajectory_opt) ;
+visualize_trajectory(robot, trajectory, cartesian_pos_final) ;
+visualize_trajectory(robot, trajectory_opt, cartesian_pos_final) ;
 
 
