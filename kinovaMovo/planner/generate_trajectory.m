@@ -1,21 +1,16 @@
 function [taskWaypoints, timeInterval] = generate_trajectory (hand_pos_init, hand_pos_final, timeStep, toolSpeed) 
 
-    %% Generate Task-space Trajectory
-    % Compute task-space trajectory waypoints via interpolation.
-    % First, compute tool traveling distance.
-    distance = norm(tform2trvec(hand_pos_init) - tform2trvec(hand_pos_final));
-    
-
-    % Next, define trajectory times based on traveling distance and desired tool speed.
+    % Generate Task-space Trajectory via interpolation.
+    distance = norm(tform2trvec(hand_pos_init) - tform2trvec(hand_pos_final)); % compute tool traveling distance.
     initTime = 0;
-    finalTime = (distance/toolSpeed) - initTime;
+    finalTime = (distance/toolSpeed) - initTime; % calculate trajectory times
     
     trajTimes = initTime:timeStep:finalTime;   % create intermediate time array
     timeInterval = [trajTimes(1); trajTimes(end)];  % time interval from beginning to the end
 
-
-    % Generates trajectory between hand_pos_init and hand_pos_final to compute intermediate task-space waypoints.
-    [taskWaypoints, taskVelocities] = transformtraj(hand_pos_init,hand_pos_final,timeInterval,trajTimes);
     
+    % Generates intermediate task-space trajectory waypoints trajectory between hand_pos_init and hand_pos_final
+    [taskWaypoints, taskVelocities] = transformtraj(hand_pos_init,hand_pos_final,timeInterval,trajTimes);
+    % taskWaypoints: 4x4xM matrix of transformations
     
 end
