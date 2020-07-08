@@ -1,4 +1,4 @@
-function ddq = dynamics(robot_object, config_parameter, dq, u)
+function dx = dynamics(robot_object, config_parameter, dq, u)
 
     % Calculate joint accelerations for given configuration with applied external forces
     robot_object.DataFormat = 'column';
@@ -10,4 +10,5 @@ function ddq = dynamics(robot_object, config_parameter, dq, u)
     
 	ddq = forwardDynamics(robot_object, config, dq, u);
     
+    dx = [dq; ddq];
 end
