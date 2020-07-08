@@ -1,64 +1,83 @@
 clear all ; close all ; 
 
-%% This section is copied from main.m
+%% robot setup
+
+
 robot       = importrobot('iiwa14.urdf');
 dim_joint   = numel(robot.homeConfiguration) ; % Get number of joints 
 endEffector = robot.BodyNames{end} ; % Get end-effector frame name
 
-
+% random control constraints
 time_step = 0.1 ; % time step, in seconds
 hand_speed = 0.1; % m/s
+uMax = pi * ones(dim_joint,1);
 
-%joint_pos_init = robot.randomConfiguration ; 
-%hand_pos_init  = getTransform(robot, joint_pos_init, endEffector);  % current hand position given the random joint angles
-%initial_position = tform2trvec(hand_pos_init);
-initial_position = [0; 0; 0];
-destination = [0.4; 0; 0.6];
-%hand_pos_final = trvec2tform(destination) * axang2tform([0 1 0 pi]); % target hand position
+joint_pos_init = robot.homeConfiguration; 
+joint_pos_init_param = [joint_pos_init(1:dim_joint).JointPosition]';   % 7x1 matrix
+hand_pos_init  = getTransform(robot, joint_pos_init, endEffector);  % current hand position given the random joint angles
+
+
+joint_pos_final = robot.randomConfiguration;
+joint_pos_final_param = [joint_pos_final(1:dim_joint).JointPosition]';   % 7x1 matrix
+hand_pos_final  = getTransform(robot, joint_pos_final, endEffector); 
+
+
+%% Previous trajectory planning
+
+% robot moves in a straight line from start configuration to goal configuration
+[taskWaypoints, timeInterval] = generate_trajectory(hand_pos_init, hand_pos_final, time_step, hand_speed) ;
+dim_steps = ceil( ( timeInterval(2) - timeInterval(1) ) / time_step );  %Nt
+
+times    = zeros(1, dim_steps);
+states   = zeros(7, dim_steps);
+controls = zeros(7, dim_steps);
+
+
+q = joint_pos_init;
+q_param = joint_pos_init_param;
+
+for t = 1 : dim_steps
+    
+    
+    % update time
+    times(t) = t * time_step;
+    
+    % update state
+    states(:,t) = q_param;
+    
+    % get next state
+    desired_transformation = taskWaypoints(:,:,t); 
+    current_transformation = getTransform(robot, q, endEffector) ;   % current hand position 
+    desired_velocity = transformation_diff(current_transformation, desired_transformation) ; % calculate the velocity needed for the desired hand position
+    [dq, measure] = inverse_kinematics(robot, q, desired_velocity) ;  
+    
+    % update state
+    controls(:,t) = dq;
+    
+    q_param  = q_param + time_step * dq; 
+    for i = 1:dim_joint
+        q(i).JointPosition = q_param(i);
+    end
+
+    
+end
+
+
 
 
 
 %% trajectory optimization
 
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
-% x = state
-% dx = rate
-% ddx = acceleration
-% 
-% cost function: integral( ddx^2 )
-% dynamics: ddx = f(x,dx,u)
-% subject to:
-%   		x(0)  = x0;
-%   		x(f)  = xf;
-%   		dx(0) = dx0;
-%   		dx(f) = dxf;
-%
-%
-% z = [x;v1;v2]
-% u = [u1;u2]
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 
 
-
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
-%                     Problem set up 		                              %
-%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
-duration = 1;
-
-x0 = initial_position;
-dx0 = zeros(3,1);
-z0 = [x0; dx0; dx0]; 
-
-
-xf = destination;
-dxf = zeros(3,1);
-zf = [xf; dxf; dxf]; 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 %                     Set up function handles                             %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
-w = 1./[1,1,1];  % weighting vector for path objective
-problem.func.dynamics = @(t,z,u)( dynamics(z,u) );
-problem.func.pathObj = @(t,z,u)( pathObj(u,w) );	% accel-squared cost function
+% For all dynamics calculations, the data format must be either 'row' or 'column'.
+robot.DataFormat = 'column';
+
+problem.func.dynamics = @(t,x,u)( dynamics(robot,x, hand_speed * ones(dim_joint,1),u) );
+problem.func.pathObj = @(t,x,u)( pathObj(x,u) );	% accel-squared cost function
 
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
@@ -67,31 +86,42 @@ problem.func.pathObj = @(t,z,u)( pathObj(u,w) );	% accel-squared cost function
 
 problem.bounds.initialTime.low = 0;
 problem.bounds.initialTime.upp = 0;
-problem.bounds.finalTime.low = duration;
-problem.bounds.finalTime.upp = duration;
 
-problem.bounds.initialState.low = z0;
-problem.bounds.initialState.upp = z0;
-problem.bounds.finalState.low = zf;
-problem.bounds.finalState.upp = zf;
+problem.bounds.finalTime.low = 0.1;
+problem.bounds.finalTime.upp = 100;
+
+problem.bounds.initialState.low = joint_pos_init_param;
+problem.bounds.initialState.upp = joint_pos_init_param;
+
+problem.bounds.finalState.low = joint_pos_final_param;
+problem.bounds.finalState.upp = joint_pos_final_param;
+
+problem.bounds.control.low = -uMax;
+problem.bounds.control.upp = uMax;
+
+
 
 
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 %                    Initial guess at trajectory                          %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
+% robot moves in a straight line from start configuration to goal configuration
 
-problem.guess.time = [0,duration];
-problem.guess.state = [z0, zf];
-problem.guess.control = [ones(2,2); zeros(3,2)];
+
+
+problem.guess.time = times;
+problem.guess.state = states;
+problem.guess.control = controls;
 
 
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 %                         Solver options                                  %
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
-problem.options.method = 'trapezoid'; 
-problem.options.trapezoid.nGrid = 40;
+
+%problem.options.method = 'trapezoid'; 
+%problem.options.trapezoid.nGrid = 15;
 
 
 
@@ -107,37 +137,3 @@ soln = optimTraj(problem);
 
 
 
-
-
-
-
-
-
-
-
-%{
-
-%% Original task-space trajectory generation (linear)
-[taskWaypoints, timeInterval]   = generate_trajectory(hand_pos_init, hand_pos_final, time_step, hand_speed) ; 
-duration = timeInterval(2) - timeInterval(1);
-dim_steps = ceil( duration/ time_step ) ;
-
-
-%% Visualization
-
-show(robot, joint_pos_init, 'PreservePlot', false, 'Frames', 'off');
-hold on
-axis([-1 1 -1 1 -0.1 1.5]);
-
-
-for n = 1:dim_steps
-
-    pose_desired = tform2trvec(taskWaypoints(:,:,n)) ;    
-    plot3(pose_desired(1), pose_desired(2), pose_desired(3), 'r.', 'MarkerSize',20)
-    
-    % draw destination 
-    plot3(destination(1), destination(2), destination(3), 'g.', 'MarkerSize',20)
-    drawnow;
-end
-
-%}
