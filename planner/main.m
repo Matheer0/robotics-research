@@ -3,18 +3,21 @@ clear all ; close all ;
 %% robot setup
 
 robot     = importrobot('iiwa14.urdf');
+robot.DataFormat = 'column';
 dim_joint = numel(robot.homeConfiguration) ; % Get number of joints 
 
 
 % random control constraints
-uMax = pi * ones(dim_joint,1);
-
-joint_pos_init = robot.homeConfiguration; 
-joint_pos_init_param = [joint_pos_init(1:dim_joint).JointPosition]';   % 7x1 matrix
+uMax = 50 * ones(dim_joint,1);
 
 
-joint_pos_final = robot.randomConfiguration;
-joint_pos_final_param = [joint_pos_final(1:dim_joint).JointPosition]';   % 7x1 matrix
+% initial & final configurations setup
+joint_pos_init = robot.homeConfiguration;   % 7x1 matrix
+%joint_pos_final = robot.randomConfiguration;
+joint_pos_final = [-1.34651803292669;1.35260787526178;
+                   1.11890660499873;0.435225571215641;
+                   -0.670851645972758;-1.81988132007208;
+                   3.04573368893129];
 
 
 %% trajectory optimization
@@ -27,8 +30,8 @@ joint_pos_final_param = [joint_pos_final(1:dim_joint).JointPosition]';   % 7x1 m
 
 boundary_speed = zeros(dim_joint, 1);
 
-initial_state = [joint_pos_init_param ; boundary_speed];
-final_state   = [joint_pos_final_param ; boundary_speed];
+initial_state = [joint_pos_init ; boundary_speed];
+final_state   = [joint_pos_final ; boundary_speed];
 
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
@@ -36,7 +39,6 @@ final_state   = [joint_pos_final_param ; boundary_speed];
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~%
 % For all dynamics calculations, the data format must be either 'row' or 'column'.
 
-robot.DataFormat = 'column';
 
 problem.func.dynamics = @(t,x,u)( dynamics(x,u,robot) );
 problem.func.pathObj = @(t,x,u)( objective(x,u) );	% accel-squared cost function
@@ -82,7 +84,7 @@ problem.guess.control = [boundary_control, boundary_control];
 
 problem.options.nlpOpt = optimset(...
     'display','iter',...
-    'MaxFunEvals',3e5,...
+    'MaxFunEvals',3.5e3,...
     'TolCon',1.4e-3,...
     'TolFun',3e-2);
 
