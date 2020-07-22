@@ -1,5 +1,6 @@
-%% Negative Manipulability Function we would like to Minimize
 function measure = manipulability(robot_obj, config_parameter)
+    % function calculating manipulability 
+    
     config = robot_obj.homeConfiguration;
     for i = 1:numel(config_parameter)
         config(i).JointPosition = config_parameter(i);
