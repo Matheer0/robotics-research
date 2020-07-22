@@ -3,7 +3,6 @@ function dx = dynamics(x,u,robot_obj)
     % returns [dimStates, dimTimes] array,
     % where size(x) = dimStates * dimTimes
     
-    robot_obj.DataFormat = 'column';
     [dimStates,dimTimes] = size(x);
     [dimJoints, ~] = size(u);
     
