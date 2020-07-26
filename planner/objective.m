@@ -1,14 +1,22 @@
-function integrand =  objective(x,u)
+function integrands =  objective(x,u,robot_obj,alpha)
     
 	% function computes the cost function integrand array
-    % size: 1 x dimTimes, where dimTimes = # of grid points
+    % of size 1 x dimTimes, where dimTimes = # of grid points
     
-    [dimControl, dimTimes] = size(u);
-    integrand = zeros(1,dimTimes);
+    [dimJoints, dimTimes] = size(u);
+    integrands = zeros(1,dimTimes); 
     
+    % iterate to update every scalar integrand
     for i = 1:dimTimes
-        control = u(:,i);
-        integrand(i) = transpose(control) * control;
+        %int2str(i)
+        state = x(:,i);
+        q_param = state( 1:dimJoints, :);  % configuration fileds
+        measure = manipulability(robot_obj, q_param); % manipulability measure
+        
+        control = u(:,i); 
+        % combine u'* u and manipulability
+        integrands(i) = transpose(control) * control - alpha *  real(measure);
+        %integrands(i) = transpose(control) * control;
     end
     
     
