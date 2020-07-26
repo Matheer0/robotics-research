@@ -8,15 +8,16 @@ function integrands =  objective(x,u,robot_obj,alpha)
     
     % iterate to update every scalar integrand
     for i = 1:dimTimes
-        %int2str(i)
         state = x(:,i);
         q_param = state( 1:dimJoints, :);  % configuration fileds
         measure = manipulability(robot_obj, q_param); % manipulability measure
         
-        control = u(:,i); 
         % combine u'* u and manipulability
+        control = u(:,i); 
         integrands(i) = transpose(control) * control - alpha *  real(measure);
-        %integrands(i) = transpose(control) * control;
+        % Note: real() is used because measure will become very small, and
+        % will have imaginary part due to numerical error, thus 
+        % we just keep the real part
     end
     
     
