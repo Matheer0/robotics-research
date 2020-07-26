@@ -1,14 +1,14 @@
 function dx = dynamics(x,u,robot_obj)
     
     % returns [dimStates, dimTimes] array,
-    % where size(x) = dimStates * dimTimes
+    % where size of x is dimStates * dimTimes
     
     [dimStates,dimTimes] = size(x);
     [dimJoints, ~] = size(u);
     
-    
     % initialize output vector
     dx = zeros(dimStates,dimTimes);
+    
     % update dx matrix
     for i = 1:dimTimes
         control = u(:,i);
