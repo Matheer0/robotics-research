@@ -6,6 +6,9 @@ function measure = manipulability(robot_obj, config_parameter)
     
     % jacobian = jacobian(4:6,:);           
     determinant = det( jacobian * transpose(jacobian) );
-    measure = sqrt(determinant);
+    measure = real( sqrt(determinant) );
+    % Note: real() is used because sqrt(determinant) may become very small 
+    % during optimization process, and may have imaginary parts due to
+    % numerical error, thus we just keep the real part
     
 end
