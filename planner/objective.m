@@ -14,10 +14,8 @@ function integrands =  objective(x,u,robot_obj,alpha)
         
         % combine u'* u and manipulability
         control = u(:,i); 
-        integrands(i) = transpose(control) * control - alpha *  real(measure);
-        % Note: real() is used because measure will become very small, and
-        % will have imaginary part due to numerical error, thus 
-        % we just keep the real part
+        integrands(i) = transpose(control) * control - alpha *  measure;
+    
     end
     
     
