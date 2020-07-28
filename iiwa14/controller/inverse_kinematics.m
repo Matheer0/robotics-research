@@ -1,5 +1,6 @@
 function [dq, index] = inverse_kinematics(robot, q_current, desired_velocity)
-    % Non-optimization Version of Inverse Kinematics
+    % Non-optimization version of Inverse Kinematics
+    
     joints = numel(q_current);
     jacobian = robot.geometricJacobian(q_current, robot.BodyNames{end});   % calculate the task jacobian matrix
     jacobian = jacobian(4:6,:);      % use 4:6 because I only want to control the position (and leave the orientation free), 3x7 matrix                                                              
