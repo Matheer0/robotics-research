@@ -40,7 +40,7 @@ joint_pos_final = [-1.34651803292669; 1.35260787526178;  1.11890660499873;
                   3.04573368893129];
 
               
-hand_pos_final  = getTransform(robot, joint_pos_final, endEffector); 
+hand_pos_final  = getTransform(robot, joint_pos_final, endEffector);  % final hand position, 4x4 matrix 
 cartesian_pos_final = tform2trvec(hand_pos_final);  % cartesian final postion
 
 
@@ -95,22 +95,30 @@ cartesian_pos_final = tform2trvec(hand_pos_final);  % cartesian final postion
 %       Opt Version: Ave 8.509146e-02, Min 2.389138e-02, Max 1.509780e-01 
 
 
+
 %% show results
 
 % linear trajectory generation without optimized inverse kinematics
 fprintf('Linear Traj, Non-Opt Control: Ave %d, Min %d, Max %d \n',...
     ave, minimum, maximum);
 % linear trajectory generation with optimized inverse kinematics
-fprintf('Linear Trak, Opt Control: Ave %d, Min %d, Max %d \n',...
+fprintf('Linear Traj, Opt Control: Ave %d, Min %d, Max %d \n',...
     ave_opt, minimum_opt, maximum_opt);
 
 
 
+% Linear (non-optimized) trajectory:
+%       Linear Traj, Non-Opt Control: Ave 8.223715e-02, Min 2.263554e-02, Max 1.058529e-01 
+%       Linear Traj, Opt Control: Ave 1.160642e-01, Min 6.026822e-02, Max 1.595046e-01 
+
+
+
+    
 % optimized trajectory generation without optimized inverse kinematics
 fprintf('Opt Traj, Non-Opt Control: Ave %d, Min %d, Max %d \n',...
     nonLinear_ave, nonLinear_minimum, nonLinear_maximum);
 % optimized trajectory generation with optimized inverse kinematics
-fprintf('Opt: Ave %d, Min %d, Max %d \n',...
+fprintf('Opt Traj, Opt Control: Ave %d, Min %d, Max %d \n',...
     nonLinear_ave_opt, nonLinear_minimum_opt, nonLinear_maximum_opt);
 
 
@@ -125,6 +133,5 @@ visualize_trajectory(robot, trajectory_opt, cartesian_pos_final);
 % optimized path planning
 visualize_trajectory(robot, optTrajectory, cartesian_pos_final);
 visualize_trajectory(robot, optTrajectory_opt, cartesian_pos_final);
-
 
 
