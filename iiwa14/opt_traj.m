@@ -35,7 +35,7 @@ function [optTrajectory, optTrajectory_opt] = opt_traj(robot, joint_pos_init,joi
     %% Robot Control
     
     endEffector = robot.BodyNames{end};
-    t_current = 0;
+    t_current = times(1);
     
     for i = 2 : numel(times)
         
@@ -57,7 +57,7 @@ function [optTrajectory, optTrajectory_opt] = opt_traj(robot, joint_pos_init,joi
     
         % save data for visualization
         optTrajectory.manipulability_index(current_index) = measure;
-        optTrajectory.time(current_index) = t_next;    % save data for visualization  
+        optTrajectory.time(current_index) = t_current;    % current time  
         optTrajectory.hand_pos_desired(:,current_index) = transformation_diff(pose_desired);
         optTrajectory.hand_pos_current(:,current_index) = transformation_diff(pose_current);    
         optTrajectory.state(:,current_index) = state;
@@ -74,7 +74,7 @@ function [optTrajectory, optTrajectory_opt] = opt_traj(robot, joint_pos_init,joi
         state_opt = [q_opt_param; dq_opt];        
     
         optTrajectory_opt.manipulability_index_opt(current_index) = measure_opt;
-        optTrajectory_opt.time(current_index) = t_next;    
+        optTrajectory_opt.time(current_index) = t_current;    
         optTrajectory_opt.hand_pos_desired(:,current_index) = transformation_diff(pose_desired) ;
         optTrajectory_opt.hand_pos_current(:,current_index) = transformation_diff(pose_current_opt) ;    
         optTrajectory_opt.state(:,current_index) = state_opt ; 
