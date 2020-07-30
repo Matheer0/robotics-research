@@ -52,11 +52,10 @@ cartesian_pos_final = tform2trvec(hand_pos_final);  % cartesian final postion
                                            hand_speed, max_joint_speed);
 
 % non-optimized control
-[ave, minimum, maximum] = checkout_result(trajectory.manipulability_index);
+linear_result = checkout_result(trajectory.manipulability_index);
 
 % optimized control
-[ave_opt, minimum_opt, maximum_opt]...
-    = checkout_result(trajectory_opt.manipulability_index_opt);
+linear_result_opt = checkout_result(trajectory_opt.manipulability_index_opt);
 
 
 
@@ -66,12 +65,10 @@ cartesian_pos_final = tform2trvec(hand_pos_final);  % cartesian final postion
                                         alpha, max_joint_speed);
 
 % non-optimized control
-[nonLinear_ave, nonLinear_minimum, nonLinear_maximum]...
-     = checkout_result(optTrajectory.manipulability_index);
+nonLinear_result = checkout_result(optTrajectory.manipulability_index);
 
 % optimized control
-[nonLinear_ave_opt, nonLinear_minimum_opt,nonLinear_maximum_opt] ... 
-    = checkout_result(optTrajectory_opt.manipulability_index_opt);
+nonLinear_result_opt = checkout_result(optTrajectory_opt.manipulability_index_opt);
 
 
 % alpha = 0.1:
@@ -100,10 +97,10 @@ cartesian_pos_final = tform2trvec(hand_pos_final);  % cartesian final postion
 
 % linear trajectory generation without optimized inverse kinematics
 fprintf('Linear Traj, Non-Opt Control: Ave %d, Min %d, Max %d \n',...
-    ave, minimum, maximum);
+    linear_result(1), linear_result(2), linear_result(3));
 % linear trajectory generation with optimized inverse kinematics
 fprintf('Linear Traj, Opt Control: Ave %d, Min %d, Max %d \n',...
-    ave_opt, minimum_opt, maximum_opt);
+    linear_result_opt(1), linear_result_opt(2), linear_result_opt(3));
 
 
 
@@ -116,10 +113,10 @@ fprintf('Linear Traj, Opt Control: Ave %d, Min %d, Max %d \n',...
     
 % optimized trajectory generation without optimized inverse kinematics
 fprintf('Opt Traj, Non-Opt Control: Ave %d, Min %d, Max %d \n',...
-    nonLinear_ave, nonLinear_minimum, nonLinear_maximum);
+    nonLinear_result(1), nonLinear_result(2), nonLinear_result(3));
 % optimized trajectory generation with optimized inverse kinematics
 fprintf('Opt Traj, Opt Control: Ave %d, Min %d, Max %d \n',...
-    nonLinear_ave_opt, nonLinear_minimum_opt, nonLinear_maximum_opt);
+    nonLinear_result_opt(1), nonLinear_result_opt(2), nonLinear_result_opt(3));
 
 
 
