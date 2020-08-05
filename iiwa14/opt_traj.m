@@ -14,7 +14,8 @@ function [optTrajectory, optTrajectory_opt] = opt_traj(robot, joint_pos_init,joi
     
     %% Non-optimized Control Task-Space Motion
     q_param = joint_pos_init;           % 7x1 matrix 
-
+    
+    optTrajectory.torque   = zeros(1, dim_steps);
     optTrajectory.manipulability_index   = zeros(1, dim_steps);
     optTrajectory.time             = zeros(1, dim_steps);
     optTrajectory.state            = zeros(dim_state, dim_steps);
@@ -24,8 +25,9 @@ function [optTrajectory, optTrajectory_opt] = opt_traj(robot, joint_pos_init,joi
 
     %% Optimized Control Task-Space Motion
     q_opt_param = joint_pos_init;               % 7x1 matrix   
-
-    optTrajectory_opt.manipulability_index_opt        = zeros(1, dim_steps);
+    
+    optTrajectory_opt.torque = zeros(1, dim_steps);
+    optTrajectory_opt.manipulability_index = zeros(1, dim_steps);
     optTrajectory_opt.time             = zeros(1, dim_steps);
     optTrajectory_opt.state            = zeros(dim_state, dim_steps);
     optTrajectory_opt.hand_pos_desired = zeros(6, dim_steps);
@@ -54,16 +56,22 @@ function [optTrajectory, optTrajectory_opt] = opt_traj(robot, joint_pos_init,joi
         desired_velocity = transformation_diff(pose_current, pose_desired); % calculate the velocity needed for the desired hand position
         [dq, measure] = inverse_kinematics(robot, q_param, desired_velocity);     % use inverse kinematics to control the robot
         state = [q_param; dq];
+        
+        % get next state
+        q_param  = q_param + time_step * dq; 
+        
+        % calculate u*u
+        torque = inverseDynamics(robot, q_param, dq);
+        torque_squared = transpose(torque) * torque;
     
         % save data for visualization
+        optTrajectory.torque(current_index) = torque_squared;
         optTrajectory.manipulability_index(current_index) = measure;
         optTrajectory.time(current_index) = t_current;    % current time  
         optTrajectory.hand_pos_desired(:,current_index) = transformation_diff(pose_desired);
         optTrajectory.hand_pos_current(:,current_index) = transformation_diff(pose_current);    
         optTrajectory.state(:,current_index) = state;
     
-        % get next state
-        q_param  = q_param + time_step * dq; 
 
     
         %% Opt
@@ -71,16 +79,24 @@ function [optTrajectory, optTrajectory_opt] = opt_traj(robot, joint_pos_init,joi
         pose_current_opt = getTransform(robot, q_opt_param, endEffector);  
         desired_velocity_opt = transformation_diff(pose_current_opt, pose_desired); 
         [dq_opt, measure_opt] = inverse_kinematics_opt(robot, q_opt_param, desired_velocity_opt, max_joint_speed);   
-        state_opt = [q_opt_param; dq_opt];        
-    
-        optTrajectory_opt.manipulability_index_opt(current_index) = measure_opt;
-        optTrajectory_opt.time(current_index) = t_current;    
-        optTrajectory_opt.hand_pos_desired(:,current_index) = transformation_diff(pose_desired) ;
-        optTrajectory_opt.hand_pos_current(:,current_index) = transformation_diff(pose_current_opt) ;    
-        optTrajectory_opt.state(:,current_index) = state_opt ; 
-    
+        state_opt = [q_opt_param; dq_opt];  
+        
         % get next state
         q_opt_param  = q_opt_param + time_step * dq_opt; 
+        
+        % calculate u*u
+        torque_opt = inverseDynamics(robot, q_opt_param, dq_opt);
+        torque_squared_opt = transpose(torque_opt) * torque_opt;
+    
+        % save data for visualization
+        optTrajectory_opt.torque(current_index) = torque_squared_opt;
+        optTrajectory_opt.manipulability_index(current_index) = measure_opt;
+        optTrajectory_opt.time(current_index) = t_current;    
+        optTrajectory_opt.hand_pos_desired(:,current_index) = transformation_diff(pose_desired);
+        optTrajectory_opt.hand_pos_current(:,current_index) = transformation_diff(pose_current_opt);    
+        optTrajectory_opt.state(:,current_index) = state_opt; 
+    
+        
     
         %%   
         t_current = t_next;
