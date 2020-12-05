@@ -1,4 +1,4 @@
-# Matlab Code of Robot Arm Trajectory Planning
+# Matlab Code for Robot Arm Trajectory Planning
 
 ## Summary
 I optimizaed the multi-joint robot arm's trajectory planning by balancing manipulability maximization and control cost minimization, as my 2020 summer robotics research project at McGill University. 
